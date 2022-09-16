@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2022 Intel Corporation.
- * Copyright (c) OmniSci, Inc. and its affiliates.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -120,16 +119,25 @@ bool ResultSetComparator::isNull(const int8_t* value_ptr,
   return false;
 }
 
+<<<<<<< HEAD
 #define GET_TYPE_VALUE_AND_COMPARE(C_TYPE)                                               \
+=======
+#define GET_TYPE_VALUE_AND_COMPAIR(C_TYPE)                                               \
+>>>>>>> [POAE7-2022] [M3][Functionality][AggOp] [32000] order by on col
   {                                                                                      \
     C_TYPE lhs_value = *(C_TYPE*)lhs_value_ptr;                                          \
     C_TYPE rhs_value = *(C_TYPE*)rhs_value_ptr;                                          \
     if (lhs_value != rhs_value) {                                                        \
+<<<<<<< HEAD
       cmp_result = lhs_value < rhs_value ? CompareResult::Less : CompareResult::Greater; \
+=======
+      cmp_result = lhs_value < rhs_value ? CompairResult::Less : CompairResult::Greater; \
+>>>>>>> [POAE7-2022] [M3][Functionality][AggOp] [32000] order by on col
     }                                                                                    \
     break;                                                                               \
   }
 
+<<<<<<< HEAD
 CompareResult ResultSetComparator::compareValue(const int8_t* lhs_value_ptr,
                                                 const int8_t* rhs_value_ptr,
                                                 const ::substrait::Type& type) const {
@@ -154,10 +162,37 @@ CompareResult ResultSetComparator::compareValue(const int8_t* lhs_value_ptr,
     case ::substrait::Type::KindCase::kFp64:
     case ::substrait::Type::KindCase::kDecimal: {
       GET_TYPE_VALUE_AND_COMPARE(double)
+=======
+CompairResult ResultSetComparator::compairValue(const int8_t* lhs_value_ptr,
+                                                const int8_t* rhs_value_ptr,
+                                                const ::substrait::Type& type) const {
+  CompairResult cmp_result = CompairResult::Equal;
+  switch (type.kind_case()) {
+    case ::substrait::Type::KindCase::kBool:
+    case ::substrait::Type::KindCase::kI8: {
+      GET_TYPE_VALUE_AND_COMPAIR(int8_t)
+    }
+    case ::substrait::Type::KindCase::kI16: {
+      GET_TYPE_VALUE_AND_COMPAIR(int16_t)
+    }
+    case ::substrait::Type::KindCase::kI32: {
+      GET_TYPE_VALUE_AND_COMPAIR(int32_t)
+    }
+    case ::substrait::Type::KindCase::kI64: {
+      GET_TYPE_VALUE_AND_COMPAIR(int64_t)
+    }
+    case ::substrait::Type::KindCase::kFp32: {
+      GET_TYPE_VALUE_AND_COMPAIR(float)
+    }
+    case ::substrait::Type::KindCase::kFp64:
+    case ::substrait::Type::KindCase::kDecimal: {
+      GET_TYPE_VALUE_AND_COMPAIR(double)
+>>>>>>> [POAE7-2022] [M3][Functionality][AggOp] [32000] order by on col
     }
     case ::substrait::Type::KindCase::kDate:
     case ::substrait::Type::KindCase::kTime:
     case ::substrait::Type::KindCase::kTimestamp: {
+<<<<<<< HEAD
       GET_TYPE_VALUE_AND_COMPARE(int64_t)
     }
     case ::substrait::Type::KindCase::kString: {
@@ -166,6 +201,16 @@ CompareResult ResultSetComparator::compareValue(const int8_t* lhs_value_ptr,
     }
     case ::substrait::Type::KindCase::kVarchar: {
       // todo, varchar value compare
+=======
+      GET_TYPE_VALUE_AND_COMPAIR(int64_t)
+    }
+    case ::substrait::Type::KindCase::kString: {
+      // todo, string value compair
+      break;
+    }
+    case ::substrait::Type::KindCase::kVarchar: {
+      // todo, varchar value compair
+>>>>>>> [POAE7-2022] [M3][Functionality][AggOp] [32000] order by on col
       break;
     }
     default:
@@ -192,6 +237,7 @@ bool ResultSetComparator::operator()(const std::vector<int8_t*>& lhs,
     if (!isNull(rhs_value_ptr, type) && isNull(rhs_value_ptr, type)) {
       return !order_entry.nulls_first;
     }
+<<<<<<< HEAD
     CompareResult cmp_result =
         compareValue(reinterpret_cast<const int8_t*>(lhs_value_ptr),
                      reinterpret_cast<const int8_t*>(rhs_value_ptr),
@@ -199,6 +245,15 @@ bool ResultSetComparator::operator()(const std::vector<int8_t*>& lhs,
     if (cmp_result == CompareResult::Equal) {
       continue;
     } else if (cmp_result == CompareResult::Greater) {
+=======
+    CompairResult cmp_result =
+        compairValue(reinterpret_cast<const int8_t*>(lhs_value_ptr),
+                     reinterpret_cast<const int8_t*>(rhs_value_ptr),
+                     type);
+    if (cmp_result == CompairResult::Equal) {
+      continue;
+    } else if (cmp_result == CompairResult::Greater) {
+>>>>>>> [POAE7-2022] [M3][Functionality][AggOp] [32000] order by on col
       return false != order_entry.is_desc;
     } else {
       return true != order_entry.is_desc;
