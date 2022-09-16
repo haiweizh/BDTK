@@ -28,6 +28,8 @@
 #include "CiderBatchUtils.h"
 #include "cider/CiderException.h"
 #include "exec/module/batch/CiderArrowBufferHolder.h"
+#include "exec/plan/parser/CiderSort.h"
+#include "exec/template/RelAlgExecutionUnit.h"
 #include "util/CiderBitUtils.h"
 
 /// \class CiderBatch
@@ -432,7 +434,19 @@ class CiderBatch {
 
   void set_schema(const std::shared_ptr<CiderTableSchema> schema) { schema_ = schema; }
 
+  void sort(const SortInfo& sort_info);
+
+  std::vector<std::vector<int8_t*>> getTableVec();
+
+  void printTable(const std::vector<std::vector<int8_t*>>& table_ptr_vec);
+
+  void reWriteTable(const std::vector<std::vector<int8_t*>>& table_ptr_vec,
+                    const std::vector<substrait::Type>& types);
+
+  bool get_is_sort() const { return is_sorted_; }
+
  private:
+  bool is_sorted_ = false;
   int64_t row_num_ = 0;
   int64_t row_capacity_ = 0;
   std::vector<size_t> column_type_size_{};

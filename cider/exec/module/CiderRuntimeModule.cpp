@@ -608,6 +608,10 @@ CiderRuntimeModule::fetchResults(int32_t max_row) {
           setSchemaAndUpdateCountDistinctResIfNeed(std::move(groupby_agg_result)))));
 }
 
+SortInfo CiderRuntimeModule::getSortInfo() {
+  return ciderCompilationResult_->impl_->rel_alg_exe_unit_->sort_info;
+}
+
 CiderAggHashTableRowIteratorPtr CiderRuntimeModule::getGroupByAggHashTableIteratorAt(
     size_t index) {
   if (group_by_agg_hashtable_) {
