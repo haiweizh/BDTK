@@ -82,11 +82,7 @@ class SortField {
 std::vector<Analyzer::OrderEntry> translate_collation(
     const std::vector<SortField>& sort_fields);
 
-<<<<<<< HEAD
 enum CompareResult { Equal, Greater, Less };
-=======
-enum CompairResult { Equal, Greater, Less };
->>>>>>> [POAE7-2022] [M3][Functionality][AggOp] [32000] order by on col
 
 struct ResultSetComparator {
   ResultSetComparator(const SortInfo& sort_info,
@@ -100,11 +96,7 @@ struct ResultSetComparator {
   bool isSubtraitBoolType(const ::substrait::Type& type) const;
   bool isNull(const int8_t* value_ptr, const ::substrait::Type& type) const;
   bool operator()(const std::vector<int8_t*>& lhs, const std::vector<int8_t*>& rhs) const;
-<<<<<<< HEAD
   CompareResult compareValue(const int8_t* lhs_value_ptr,
-=======
-  CompairResult compairValue(const int8_t* lhs_value_ptr,
->>>>>>> [POAE7-2022] [M3][Functionality][AggOp] [32000] order by on col
                              const int8_t* rhs_value_ptr,
                              const ::substrait::Type& type) const;
   const SortInfo& sort_info_;
