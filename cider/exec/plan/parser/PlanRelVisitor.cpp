@@ -512,16 +512,8 @@ void SortRelVisitor::visit(OrderEntryContext* order_entry_context) {
   size_t field = 0;
   for (int i = 0; i < sorts_size; i++) {
     const substrait::SortField& substrait_sort_field = rel_node_.sorts(i);
-    auto column_var = toAnalyzerExprConverter_->toAnalyzerExpr(
-        substrait_sort_field.expr(),
-        function_map_,
-        variable_context_shared_ptr_->getExprMapPtr(is_right_join_node_));
-    if (auto column_var_expr =
-            std::dynamic_pointer_cast<Analyzer::ColumnVar>(column_var)) {
-      field = column_var_expr->get_column_id();
-    } else {
-      throw std::runtime_error("Failed to get expr from sort field.");
-    }
+    field =
+        substrait_sort_field.expr().selection().direct_reference().struct_field().field();
     SortDirection sort_dir = SortDirection::Ascending;
     NullSortedPosition nulls_pos = NullSortedPosition::Last;
     substrait::SortField::SortKindCase sort_kind_case =

@@ -71,10 +71,16 @@ bool ResultSetComparator::isSubtraitBoolType(const ::substrait::Type& type) cons
   return type.kind_case() == ::substrait::Type::KindCase::kBool;
 }
 
-#define GET_TYPE_VALUE_AND_JUDGE_IS_NULL(C_TYPE, TYPE_MIN) \
-  {                                                        \
-    C_TYPE value = *(C_TYPE*)value_ptr;                    \
-    return value == TYPE_MIN;                              \
+#define GET_PRIMITIVE_TYPE_VALUE_AND_JUDGE_IS_NULL(C_TYPE, TYPE_MIN) \
+  {                                                                  \
+    C_TYPE value = *(C_TYPE*)value_ptr;                              \
+    return value == TYPE_MIN;                                        \
+  }
+
+#define GET_STRING_TYPE_VALUE_AND_JUDGE_IS_NULL(C_TYPE, TYPE_NULL) \
+  {                                                                \
+    C_TYPE* real_value_ptr = (C_TYPE*)value_ptr;                   \
+    return real_value_ptr->ptr == TYPE_NULL;                       \
   }
 
 bool ResultSetComparator::isNull(const int8_t* value_ptr,
@@ -82,36 +88,33 @@ bool ResultSetComparator::isNull(const int8_t* value_ptr,
   switch (type.kind_case()) {
     case ::substrait::Type::KindCase::kBool:
     case ::substrait::Type::KindCase::kI8: {
-      GET_TYPE_VALUE_AND_JUDGE_IS_NULL(int8_t, INT8_MIN)
+      GET_PRIMITIVE_TYPE_VALUE_AND_JUDGE_IS_NULL(int8_t, INT8_MIN)
     }
     case ::substrait::Type::KindCase::kI16: {
-      GET_TYPE_VALUE_AND_JUDGE_IS_NULL(int16_t, INT16_MIN)
+      GET_PRIMITIVE_TYPE_VALUE_AND_JUDGE_IS_NULL(int16_t, INT16_MIN)
     }
     case ::substrait::Type::KindCase::kI32: {
-      GET_TYPE_VALUE_AND_JUDGE_IS_NULL(int32_t, INT32_MIN)
+      GET_PRIMITIVE_TYPE_VALUE_AND_JUDGE_IS_NULL(int32_t, INT32_MIN)
     }
     case ::substrait::Type::KindCase::kI64: {
-      GET_TYPE_VALUE_AND_JUDGE_IS_NULL(int64_t, INT64_MIN)
+      GET_PRIMITIVE_TYPE_VALUE_AND_JUDGE_IS_NULL(int64_t, INT64_MIN)
     }
     case ::substrait::Type::KindCase::kFp32: {
-      GET_TYPE_VALUE_AND_JUDGE_IS_NULL(float, INT32_MIN)
+      GET_PRIMITIVE_TYPE_VALUE_AND_JUDGE_IS_NULL(float, INT32_MIN)
     }
     case ::substrait::Type::KindCase::kFp64:
     case ::substrait::Type::KindCase::kDecimal: {
-      GET_TYPE_VALUE_AND_JUDGE_IS_NULL(double, INT64_MIN)
+      GET_PRIMITIVE_TYPE_VALUE_AND_JUDGE_IS_NULL(double, INT64_MIN)
     }
     case ::substrait::Type::KindCase::kDate:
     case ::substrait::Type::KindCase::kTime:
     case ::substrait::Type::KindCase::kTimestamp: {
-      GET_TYPE_VALUE_AND_JUDGE_IS_NULL(int64_t, INT64_MIN)
+      GET_PRIMITIVE_TYPE_VALUE_AND_JUDGE_IS_NULL(int64_t, INT64_MIN)
     }
+    case ::substrait::Type::KindCase::kFixedChar:
+    case ::substrait::Type::KindCase::kVarchar:
     case ::substrait::Type::KindCase::kString: {
-      // todo, string value isNull judge
-      return false;
-    }
-    case ::substrait::Type::KindCase::kVarchar: {
-      // todo, varchar value isNull judge
-      return false;
+      GET_STRING_TYPE_VALUE_AND_JUDGE_IS_NULL(CiderByteArray, nullptr)
     }
     default:
       throw std::runtime_error("order by not supported type: " + type.kind_case());
@@ -119,10 +122,22 @@ bool ResultSetComparator::isNull(const int8_t* value_ptr,
   return false;
 }
 
-#define GET_TYPE_VALUE_AND_COMPARE(C_TYPE)                                               \
+#define GET_PRIMITIVE_TYPE_VALUE_AND_COMPARE(C_TYPE)                                     \
   {                                                                                      \
     C_TYPE lhs_value = *(C_TYPE*)lhs_value_ptr;                                          \
     C_TYPE rhs_value = *(C_TYPE*)rhs_value_ptr;                                          \
+    if (lhs_value != rhs_value) {                                                        \
+      cmp_result = lhs_value < rhs_value ? CompareResult::Less : CompareResult::Greater; \
+    }                                                                                    \
+    break;                                                                               \
+  }
+
+#define GET_STRING_TYPE_VALUE_AND_COMPARE(C_TYPE)                                        \
+  {                                                                                      \
+    C_TYPE* lhs_real_value_ptr = (C_TYPE*)lhs_value_ptr;                                 \
+    C_TYPE* rhs_real_value_ptr = (C_TYPE*)rhs_value_ptr;                                 \
+    std::string lhs_value = CiderByteArray::toString(*lhs_real_value_ptr);               \
+    std::string rhs_value = CiderByteArray::toString(*rhs_real_value_ptr);               \
     if (lhs_value != rhs_value) {                                                        \
       cmp_result = lhs_value < rhs_value ? CompareResult::Less : CompareResult::Greater; \
     }                                                                                    \
@@ -136,36 +151,33 @@ CompareResult ResultSetComparator::compareValue(const int8_t* lhs_value_ptr,
   switch (type.kind_case()) {
     case ::substrait::Type::KindCase::kBool:
     case ::substrait::Type::KindCase::kI8: {
-      GET_TYPE_VALUE_AND_COMPARE(int8_t)
+      GET_PRIMITIVE_TYPE_VALUE_AND_COMPARE(int8_t)
     }
     case ::substrait::Type::KindCase::kI16: {
-      GET_TYPE_VALUE_AND_COMPARE(int16_t)
+      GET_PRIMITIVE_TYPE_VALUE_AND_COMPARE(int16_t)
     }
     case ::substrait::Type::KindCase::kI32: {
-      GET_TYPE_VALUE_AND_COMPARE(int32_t)
+      GET_PRIMITIVE_TYPE_VALUE_AND_COMPARE(int32_t)
     }
     case ::substrait::Type::KindCase::kI64: {
-      GET_TYPE_VALUE_AND_COMPARE(int64_t)
+      GET_PRIMITIVE_TYPE_VALUE_AND_COMPARE(int64_t)
     }
     case ::substrait::Type::KindCase::kFp32: {
-      GET_TYPE_VALUE_AND_COMPARE(float)
+      GET_PRIMITIVE_TYPE_VALUE_AND_COMPARE(float)
     }
     case ::substrait::Type::KindCase::kFp64:
     case ::substrait::Type::KindCase::kDecimal: {
-      GET_TYPE_VALUE_AND_COMPARE(double)
+      GET_PRIMITIVE_TYPE_VALUE_AND_COMPARE(double)
     }
     case ::substrait::Type::KindCase::kDate:
     case ::substrait::Type::KindCase::kTime:
     case ::substrait::Type::KindCase::kTimestamp: {
-      GET_TYPE_VALUE_AND_COMPARE(int64_t)
+      GET_PRIMITIVE_TYPE_VALUE_AND_COMPARE(int64_t)
     }
+    case ::substrait::Type::KindCase::kFixedChar:
+    case ::substrait::Type::KindCase::kVarchar:
     case ::substrait::Type::KindCase::kString: {
-      // todo, string value compare
-      break;
-    }
-    case ::substrait::Type::KindCase::kVarchar: {
-      // todo, varchar value compare
-      break;
+      GET_STRING_TYPE_VALUE_AND_COMPARE(CiderByteArray)
     }
     default:
       throw std::runtime_error("order by not supported type: " + type.kind_case());
@@ -179,22 +191,23 @@ bool ResultSetComparator::operator()(const std::vector<int8_t*>& lhs,
   for (const auto& order_entry : sort_info_.order_entries) {
     CHECK_GE(order_entry.tle_no, 1);
     CHECK_LE(order_entry.tle_no, col_size);
+    CHECK_LE(order_entry.tle_no, lhs.size());
+    CHECK_LE(order_entry.tle_no, rhs.size());
     const auto& type = types_[order_entry.tle_no - 1];
     int8_t* lhs_value_ptr = lhs[order_entry.tle_no - 1];
     int8_t* rhs_value_ptr = rhs[order_entry.tle_no - 1];
-    if (isNull(lhs_value_ptr, type) && isNull(lhs_value_ptr, type)) {
+    bool isLeftNull = isNull(lhs_value_ptr, type);
+    bool isRightNull = isNull(rhs_value_ptr, type);
+    if (isLeftNull && isRightNull) {
       continue;
     }
-    if (isNull(rhs_value_ptr, type) && !isNull(rhs_value_ptr, type)) {
+    if (isLeftNull && !isRightNull) {
       return order_entry.nulls_first;
     }
-    if (!isNull(rhs_value_ptr, type) && isNull(rhs_value_ptr, type)) {
+    if (!isLeftNull && isRightNull) {
       return !order_entry.nulls_first;
     }
-    CompareResult cmp_result =
-        compareValue(reinterpret_cast<const int8_t*>(lhs_value_ptr),
-                     reinterpret_cast<const int8_t*>(rhs_value_ptr),
-                     type);
+    CompareResult cmp_result = compareValue(lhs_value_ptr, rhs_value_ptr, type);
     if (cmp_result == CompareResult::Equal) {
       continue;
     } else if (cmp_result == CompareResult::Greater) {

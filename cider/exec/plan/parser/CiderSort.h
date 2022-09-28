@@ -28,6 +28,7 @@
 
 #include <functional>
 #include <vector>
+#include "cider/CiderTypes.h"
 #include "exec/template/RelAlgExecutionUnit.h"
 #include "substrait/type.pb.h"
 

@@ -427,8 +427,7 @@ class CiderBatch {
   void sort(const SortInfo& sort_info);
 
   // Only for debug usage.
-  std::string toValueStringRowTable(
-      const std::vector<std::vector<int8_t*>>& table_ptr_vec) const;
+  std::string toValueStringRowTable() const;
 
  private:
   bool is_sorted_ = false;

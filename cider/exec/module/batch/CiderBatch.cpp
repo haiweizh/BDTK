@@ -21,6 +21,7 @@
 
 #include "cider/batch/CiderBatch.h"
 #include "ArrowABI.h"
+#include "cider/CiderTypes.h"
 
 CiderBatch::CiderBatch(ArrowSchema* schema, std::shared_ptr<CiderAllocator> allocator)
     : arrow_schema_(schema), ownership_(true), reallocate_(true), allocator_(allocator) {
@@ -346,12 +347,18 @@ void CiderBatch::sort(const SortInfo& sort_info) {
   int col_num = column_num();
   auto types = schema_->getColumnTypes();
   std::vector<std::vector<int8_t*>> table_ptr_vec = getRowTable();
+  // std::cout << "before sort: " << std::endl;
+  // std::cout << toValueStringRowTable() << std::endl;
+
   // sort result table
   generator::ResultSetComparator rsc = generator::ResultSetComparator(sort_info, types);
   std::sort(table_ptr_vec.begin(), table_ptr_vec.end(), rsc);
+
   // rewrite table by table_ptr_vec
   reWriteTable(table_ptr_vec, types);
   is_sorted_ = true;
+  // std::cout << "after sort: " << std::endl;
+  // std::cout << toValueStringRowTable() << std::endl;
 }
 
 std::vector<std::vector<int8_t*>> CiderBatch::getRowTable() const {
@@ -387,8 +394,13 @@ std::vector<std::vector<int8_t*>> CiderBatch::getRowTable() const {
         case ::substrait::Type::KindCase::kDecimal:
           row_vec.push_back((int8_t*)&((double*)(table_ptr_[j]))[i]);
           break;
+        case ::substrait::Type::KindCase::kFixedChar:
+        case ::substrait::Type::KindCase::kVarchar:
+        case ::substrait::Type::KindCase::kString:
+          row_vec.push_back((int8_t*)&((CiderByteArray*)(table_ptr_[j]))[i]);
+          break;
         default:
-          throw std::runtime_error("Not supported type to print value!");
+          throw std::runtime_error("Not supported type to get row table!");
       }
     }
     table_ptr_vec.push_back(row_vec);
@@ -396,8 +408,8 @@ std::vector<std::vector<int8_t*>> CiderBatch::getRowTable() const {
   return std::move(table_ptr_vec);
 }
 
-std::string CiderBatch::toValueStringRowTable(
-    const std::vector<std::vector<int8_t*>>& table_ptr_vec) const {
+std::string CiderBatch::toValueStringRowTable() const {
+  std::vector<std::vector<int8_t*>> table_ptr_vec = getRowTable();
   int row_num = row_num_;
   int col_num = column_num();
   auto types = schema_->getColumnTypes();
@@ -428,8 +440,15 @@ std::string CiderBatch::toValueStringRowTable(
         case ::substrait::Type::KindCase::kDecimal:
           ss << *(double*)table_ptr_vec[i][j] << "\t";
           break;
+        case ::substrait::Type::KindCase::kFixedChar:
+        case ::substrait::Type::KindCase::kVarchar:
+        case ::substrait::Type::KindCase::kString: {
+          CiderByteArray* buf = (CiderByteArray*)table_ptr_vec[i][j];
+          ss << CiderByteArray::toString(*buf) << "\t";
+          break;
+        }
         default:
-          throw std::runtime_error("Not supported type to print value!");
+          throw std::runtime_error("Not supported type to print row table value!");
       }
     }
     ss << "\n";
@@ -476,10 +495,11 @@ void CiderBatch::reWriteTable(const std::vector<std::vector<int8_t*>>& table_ptr
       case ::substrait::Type::KindCase::kFixedChar:
       case ::substrait::Type::KindCase::kVarchar:
       case ::substrait::Type::KindCase::kString: {
+        SWAP_VALUE(CiderByteArray)
         break;
       }
       default:
-        throw std::runtime_error("Not supported type to print value!");
+        throw std::runtime_error("Not supported type to rewrite table!");
     }
   }
 }
