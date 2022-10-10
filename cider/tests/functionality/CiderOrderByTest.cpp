@@ -109,10 +109,6 @@ TEST_F(CiderOrderByFunctionTest, SelectColumnOrderByTest) {
   assertQuery("SELECT * FROM table_test ORDER BY col_a DESC, col_b DESC");
   assertQuery("SELECT * FROM table_test ORDER BY col_a ASC, col_b DESC");
   assertQuery("SELECT * FROM table_test ORDER BY col_a DESC, col_b ASC");
-  // todo: cider batch's col size is wrong.
-  // assertQuery("SELECT col_a FROM table_test ORDER BY col_b");
-  // assertQuery("SELECT col_a FROM table_test ORDER BY col_b ASC");
-  // assertQuery("SELECT col_a FROM table_test ORDER BY col_b DESC");
   // order by with nulls first/last
   assertQuery("SELECT col_b FROM table_test ORDER BY col_b NULLS FIRST");
   assertQuery("SELECT col_b FROM table_test ORDER BY col_b NULLS LAST");
@@ -126,6 +122,10 @@ TEST_F(CiderOrderByFunctionTest, SelectColumnOrderByTest) {
   assertQuery("SELECT col_d FROM table_test ORDER BY col_d ASC NULLS LAST");
   assertQuery("SELECT col_d FROM table_test ORDER BY col_d DESC NULLS FIRST");
   assertQuery("SELECT col_d FROM table_test ORDER BY col_d DESC NULLS LAST");
+  GTEST_SKIP_("FIXME: Order by not project col");
+  assertQuery("SELECT col_a FROM table_test ORDER BY col_b");
+  assertQuery("SELECT col_a FROM table_test ORDER BY col_b ASC");
+  assertQuery("SELECT col_a FROM table_test ORDER BY col_b DESC");
 }
 
 TEST_F(CiderOrderByFunctionTest, AggGroupOrderByTest) {

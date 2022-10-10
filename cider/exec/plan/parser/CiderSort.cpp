@@ -189,6 +189,7 @@ bool ResultSetComparator::operator()(const std::vector<int8_t*>& lhs,
                                      const std::vector<int8_t*>& rhs) const {
   int col_size = types_.size();
   for (const auto& order_entry : sort_info_.order_entries) {
+    CHECK_EQ(col_size, lhs.size());
     CHECK_GE(order_entry.tle_no, 1);
     CHECK_LE(order_entry.tle_no, col_size);
     CHECK_LE(order_entry.tle_no, lhs.size());
